@@ -8,7 +8,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 router.post('/', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { tickets } = req.body;
+        const { tickets } = req.body; // [{ ticketId, quantity }, { ticketId, quantity }]
 
         if (!tickets || tickets.length === 0) {
             return res.status(400).json({ error: 'Nenhum ingresso foi selecionado para compra.' });
@@ -19,18 +19,32 @@ router.post('/', authMiddleware, async (req, res) => {
 
         for (const item of tickets) {
             const ticket = await Ticket.findById(item.ticketId);
-            if (isNaN(ticket.preco) || isNaN(item.quantity)) {
-                return res.status(400).json({ error: `Preço ou quantidade inválidos para o ingresso ${ticket.nome}.` });
+            if (!ticket) {
+                return res.status(404).json({ error: `Ingresso com ID ${item.ticketId} não encontrado.` });
             }
-            totalPrice += Number(ticket.preco) * Number(item.quantity);
-            ticketUpdates.push({ ticket, quantity: item.quantity });
+
+            // Verifica se a quantidade solicitada é válida
+            if (isNaN(item.quantity) || item.quantity <= 0) {
+                return res.status(400).json({ error: `Quantidade inválida para o ingresso ${ticket.nome}.` });
+            }
+
+            // Verifica se há estoque suficiente
+            if (item.quantity > ticket.quantidade) {
+                return res.status(400).json({ error: `Estoque insuficiente para o ingresso ${ticket.nome}. Disponível: ${ticket.quantidade}` });
+            }
+
+            // Calcula o preço total
+            totalPrice += ticket.preco * item.quantity;
 
             // Atualiza o estoque
-            ticket.availableQuantity -= item.quantity;
-            await ticket.save();
+            ticket.quantidade -= item.quantity; // Subtrai a quantidade comprada
+            await ticket.save(); // Salva a atualização no banco de dados
+
+            // Adiciona o ingresso à lista de atualizações
+            ticketUpdates.push({ ticket, quantity: item.quantity });
         }
 
-        // Criar a compra
+        // Cria a compra
         const purchase = new Purchase({
             user: userId,
             tickets: ticketUpdates.map(item => ({
