@@ -3,8 +3,9 @@
     {{#if tickets.length}}
         {{#each tickets}}
         <div>
-            <p>{{nome}} - R$ {{preco}}</p>
-            <input type="number" name="quantity" min="1" max="{{quantidade}}" data-id="{{_id}}" placeholder="Quantidade">
+            <p>{{this.nome}} - R$ {{this.preco}}</p>
+            <p>Estoque disponível: <span id="estoque-{{this._id}}">{{this.quantidade}}</span></p>
+            <input type="number" name="quantity" min="1" max="{{this.quantidade}}" data-id="{{this._id}}" placeholder="Quantidade">
         </div>
         {{/each}}
     {{else}}
@@ -12,6 +13,10 @@
     {{/if}}
     <button type="submit">Comprar</button>
 </form>
+
+<a href="/history" style="display: block; margin-top: 20px;">
+    <button>Ver Histórico de Compras</button>
+</a>
 
 <script>
 document.getElementById("purchaseForm").addEventListener("submit", async (e) => {
@@ -45,7 +50,16 @@ document.getElementById("purchaseForm").addEventListener("submit", async (e) => 
         const data = await res.json();
         if (data.message) {
             alert("Compra realizada com sucesso!");
-            window.location.href = "/history";
+
+            // Atualiza o estoque exibido na página
+            tickets.forEach(item => {
+                const estoqueElement = document.getElementById(`estoque-${item.ticketId}`);
+                if (estoqueElement) {
+                    const novoEstoque = parseInt(estoqueElement.textContent) - item.quantity;
+                    estoqueElement.textContent = novoEstoque;
+                }
+            });
+
         } else {
             alert("Erro na compra: " + (data.error || 'Erro desconhecido'));
         }
