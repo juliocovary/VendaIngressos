@@ -1,12 +1,20 @@
 <h2>Histórico de Compras</h2>
-{{#each purchases}}
+{{#if purchases.length}}
+    {{#each purchases}}
     <div>
-        <h3>Compra #{{_id}}</h3>
-        <p>Total: R$ {{totalPrice}}</p>
+        <h3>Compra #{{this._id}}</h3>
+        <p>Total: R$ {{this.totalPrice}}</p>
         <ul>
-            {{#each tickets}}
-                <li>{{this.ticket.name}} - Quantidade: {{this.quantity}}</li>
+            {{#each this.tickets}}
+                <li>{{this.ticket.nome}} - Quantidade: {{this.quantity}}</li>
             {{/each}}
         </ul>
     </div>
-{{/each}}
+    {{/each}}
+{{else}}
+    <p>Nenhuma compra encontrada.</p>
+{{/if}}
+
+<a href="/buy" style="display: block; margin-top: 20px;">
+    <button>Voltar para Comprar Ingressos</button>
+</a>
