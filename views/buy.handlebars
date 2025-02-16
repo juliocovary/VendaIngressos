@@ -1,0 +1,56 @@
+<h2>Comprar Ingressos</h2>
+<form id="purchaseForm">
+    {{#if tickets.length}}
+        {{#each tickets}}
+        <div>
+            <p>{{nome}} - R$ {{preco}}</p>
+            <input type="number" name="quantity" min="1" max="{{quantidade}}" data-id="{{_id}}" placeholder="Quantidade">
+        </div>
+        {{/each}}
+    {{else}}
+        <p>Nenhum ingresso disponível no momento.</p>
+    {{/if}}
+    <button type="submit">Comprar</button>
+</form>
+
+<script>
+document.getElementById("purchaseForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+    if (!token) {
+        alert("Faça login primeiro!");
+        return;
+    }
+    
+    const tokenValue = token.split('=')[1];
+    const tickets = [];
+    
+    document.querySelectorAll("input[name='quantity']").forEach(input => {
+        if (input.value > 0) {
+            tickets.push({ ticketId: input.dataset.id, quantity: parseInt(input.value, 10) });
+        }
+    });
+    
+    try {
+        const res = await fetch('/purchase', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenValue}`
+            },
+            body: JSON.stringify({ tickets })
+        });
+        
+        const data = await res.json();
+        if (data.message) {
+            alert("Compra realizada com sucesso!");
+            window.location.href = "/history";
+        } else {
+            alert("Erro na compra: " + (data.error || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert("Erro ao processar a compra: " + error.message);
+    }
+});
+</script>

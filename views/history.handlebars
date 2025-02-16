@@ -1,0 +1,12 @@
+<h2>Histórico de Compras</h2>
+{{#each purchases}}
+    <div>
+        <h3>Compra #{{_id}}</h3>
+        <p>Total: R$ {{totalPrice}}</p>
+        <ul>
+            {{#each tickets}}
+                <li>{{this.ticket.name}} - Quantidade: {{this.quantity}}</li>
+            {{/each}}
+        </ul>
+    </div>
+{{/each}}
